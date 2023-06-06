@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Passkeys Demo</title>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+  </head>
+
+  <body>
+    <h1>Passkeys Demo</h1>
+    <p id="passkeys_check">Checking passkeys support...</p>
+
+    <form>
+      <fieldset id="auth" disabled>
+        <legend>Login</legend>
+
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" autocomplete="username webauthn" />
+
+        <hr />
+        <button type="button" id="register" onclick="handleRegister()">Register</button>
+        <button type="button" id="login" onclick="handleLogin()">Login</button>
+      </fieldset>
+    </form>
+
+    <p id="status">Not logged in.</p>
+
+    <pre id="log"></pre>
+  </body>
+
+  <script>
+    function log(message) {
+      console.log(message);
+      document.getElementById('log').innerText += `${JSON.stringify(message, null, 2)}\n`;
+      return message;
+    }
+  </script>
+
+  <script>
+    (async () => {
+      if (
+        SimpleWebAuthnBrowser.browserSupportsWebAuthn() &&
+        (await SimpleWebAuthnBrowser.platformAuthenticatorIsAvailable()) &&
+        (await SimpleWebAuthnBrowser.browserSupportsWebAuthnAutofill())
+      ) {
+        log('Passkeys are supported! ✅');
+        document.getElementById('passkeys_check').innerText = 'Passkeys are supported! ✅';
+        document.getElementById('auth').disabled = false;
+      } else {
+        log('Passkeys are not supported! ❌');
+        document.getElementById('passkeys_check').innerText = 'Passkeys are not supported! ❌';
+        throw new Error('Passkeys are not supported! ❌');
+      }
+    })();
+  </script>
+
+  <script>
+    async function postJson(url, body) {
+      return await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then((r) => r.json());
+    }
+  </script>
+
+  <script>
+    async function handleRegister() {
+      const username = document.getElementById('name').value;
+
+      await postJson('/register/options', { username })
+        .then(log)
+        .then(async (options) => await SimpleWebAuthnBrowser.startRegistration(options))
+        .then(log)
+        .then(async (cred) => await postJson('/register/verify', { username, cred }))
+        .then(log)
+        .then((res) => {
+          if (res.verified) {
+            document.getElementById('status').innerText = `Registered as ${username}! ✅`;
+          } else {
+            document.getElementById('status').innerText = `Registration failed. ❌`;
+          }
+        })
+        .catch(log);
+    }
+  </script>
+
+  <script>
+    async function startAuth(options, conditional) {
+      await SimpleWebAuthnBrowser.startAuthentication(options, conditional)
+        .then(log)
+        .then(async (cred) => await postJson('/login/verify', { cred }))
+        .then(log)
+        .then((res) => {
+          if (res.verified) {
+            document.getElementById('status').innerText = `Logged in! ✅`;
+          } else {
+            document.getElementById('status').innerText = `Login failed. ❌`;
+          }
+        });
+    }
+
+    const loginOptions = postJson('/login/options').then(log);
+
+    loginOptions.then(async (options) => await startAuth(options, true));
+
+    async function handleLogin() {
+      const username = document.getElementById('name').value;
+
+      await loginOptions.then(async (options) => await startAuth(options, false));
+    }
+  </script>
+</html>
