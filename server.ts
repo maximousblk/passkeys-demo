@@ -139,7 +139,7 @@ app.post("/register/verify", async (c) => {
 
     await kv.set(["users", userId], {
       username: username,
-      data: "Demo user's data",
+      data: "Private user data for " + (username || "Anon"),
       credentials: {
         [cred.id]: {
           credentialID,
@@ -241,7 +241,11 @@ app.get("/private", async (c) => {
   const user = await kv.get<User>(["users", result.payload.userId as string]);
   if (!user.value) return new Response("Unauthorized", { status: 401 });
 
-  return c.text(user.value.data);
+  return c.json({
+    id: result.payload.userId,
+    username: user.value.username || "Anon",
+    data: user.value.data,
+  });
 });
 
 Deno.serve({ port: 80 }, app.fetch);

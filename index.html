@@ -24,8 +24,8 @@
       <fieldset id="auth" disabled>
         <legend>Login</legend>
 
-        <label for="name">Name <span style="opacity: 0.5">(Optional!)</span></label>
-        <input type="text" id="name" name="name" autocomplete="username webauthn" placeholder="Batman" />
+        <label for="name">Name <span style="opacity: 0.5">(Optional)</span></label>
+        <input type="text" id="name" name="name" autocomplete="username webauthn" placeholder="Anon" />
 
         <hr />
 
@@ -34,6 +34,8 @@
       </fieldset>
     </form>
 
+    <p>Go to <a href="/private">/private</a> to see the private page.</p>
+
     <pre id="status" hidden></pre>
 
     <div id="logs" hidden>
@@ -41,6 +43,12 @@
       <h3>Logs</h3>
     </div>
   </body>
+
+  <script>
+    const NAMES = ['Batman', 'i miss her', 'Bond, James Bond', 'Skyler White Yo', 'T800'];
+    const _nameEl = document.getElementById('name');
+    _nameEl.placeholder = NAMES[Math.floor(Math.random() * NAMES.length)];
+  </script>
 
   <script>
     const _logEl = document.getElementById('logs');
