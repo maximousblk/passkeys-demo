@@ -3,5 +3,8 @@
   "tasks": {
     "start": "deno run --allow-all --unstable server.ts",
     "start:watch": "deno run --allow-all --unstable --watch server.ts"
+  },
+  "fmt": {
+    "lineWidth": 120
   }
 }

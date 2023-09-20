@@ -4,36 +4,57 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Passkeys Demo</title>
+    <title>🦕 Passkeys Demo</title>
     <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/bamboo.css" />
   </head>
 
   <body>
-    <h1>Passkeys Demo</h1>
-    <p id="passkeys_check">Checking passkeys support...</p>
+    <h1>🦕 Passkeys Demo</h1>
+
+    <p id="passkeys_check">Passkeys are not supported! ❌</p>
+
+    <noscript>
+      <blockquote>
+        <p>⚠️ Passkeys require JavaScript to work.</p>
+      </blockquote>
+    </noscript>
 
     <form>
       <fieldset id="auth" disabled>
         <legend>Login</legend>
 
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" autocomplete="username webauthn" />
+        <label for="name">Name <span style="opacity: 0.5">(Optional!)</span></label>
+        <input type="text" id="name" name="name" autocomplete="username webauthn" placeholder="Batman" />
 
         <hr />
+
         <button type="button" id="register" onclick="handleRegister()">Register</button>
         <button type="button" id="login" onclick="handleLogin()">Login</button>
       </fieldset>
     </form>
 
-    <p id="status">Not logged in.</p>
+    <pre id="status" hidden></pre>
 
-    <pre id="log"></pre>
+    <div id="logs" hidden>
+      <hr />
+      <h3>Logs</h3>
+    </div>
   </body>
 
   <script>
+    const _logEl = document.getElementById('logs');
     function log(message) {
       console.log(message);
-      document.getElementById('log').innerText += `${JSON.stringify(message, null, 2)}\n`;
+      _logEl.innerHTML += `<pre>${JSON.stringify(message, null, 2)}</pre>`;
+      _logEl.hidden = false;
+      return message;
+    }
+
+    const _statusEl = document.getElementById('status');
+    function status(message) {
+      _statusEl.hidden = false;
+      _statusEl.innerText = message;
       return message;
     }
   </script>
@@ -62,7 +83,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-      }).then((r) => r.json());
+      }).then((r) => (r.ok ? r.json() : r.text()));
     }
   </script>
 
@@ -77,11 +98,7 @@
         .then(async (cred) => await postJson('/register/verify', { username, cred }))
         .then(log)
         .then((res) => {
-          if (res.verified) {
-            document.getElementById('status').innerText = `Registered as ${username}! ✅`;
-          } else {
-            document.getElementById('status').innerText = `Registration failed. ❌`;
-          }
+          status(res.verified ? '✅ Registered!' : '❌ Registration failed.');
         })
         .catch(log);
     }
@@ -94,17 +111,16 @@
         .then(async (cred) => await postJson('/login/verify', { cred }))
         .then(log)
         .then((res) => {
-          if (res.verified) {
-            document.getElementById('status').innerText = `Logged in! ✅`;
-          } else {
-            document.getElementById('status').innerText = `Login failed. ❌`;
-          }
+          status(res.verified ? '✅ Logged in!' : '❌ Login failed.');
         });
     }
 
     const loginOptions = postJson('/login/options').then(log);
 
-    loginOptions.then(async (options) => await startAuth(options, true));
+    loginOptions.then(async (options) => {
+      log('WebAuthn Conditional UI started.');
+      return await startAuth(options, true);
+    });
 
     async function handleLogin() {
       const username = document.getElementById('name').value;
