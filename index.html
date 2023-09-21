@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🦕 Passkeys Demo</title>
+    <title>Passkeys Demo</title>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/🦕_color.svg" />
     <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/bamboo.css" />
   </head>
@@ -45,13 +46,13 @@
   </body>
 
   <script>
-    const NAMES = ['Batman', 'i miss her', 'Bond, James Bond', 'Skyler White Yo', 'T800'];
-    const _nameEl = document.getElementById('name');
+    const NAMES = ["Batman", "i miss her", "Bond, James Bond", "Skyler White Yo", "T800"];
+    const _nameEl = document.getElementById("name");
     _nameEl.placeholder = NAMES[Math.floor(Math.random() * NAMES.length)];
   </script>
 
   <script>
-    const _logEl = document.getElementById('logs');
+    const _logEl = document.getElementById("logs");
     function log(message) {
       console.log(message);
       _logEl.innerHTML += `<pre>${JSON.stringify(message, null, 2)}</pre>`;
@@ -59,7 +60,7 @@
       return message;
     }
 
-    const _statusEl = document.getElementById('status');
+    const _statusEl = document.getElementById("status");
     function status(message) {
       _statusEl.hidden = false;
       _statusEl.innerText = message;
@@ -74,13 +75,13 @@
         (await SimpleWebAuthnBrowser.platformAuthenticatorIsAvailable()) &&
         (await SimpleWebAuthnBrowser.browserSupportsWebAuthnAutofill())
       ) {
-        log('Passkeys are supported! ✅');
-        document.getElementById('passkeys_check').innerText = 'Passkeys are supported! ✅';
-        document.getElementById('auth').disabled = false;
+        log("Passkeys are supported! ✅");
+        document.getElementById("passkeys_check").innerText = "Passkeys are supported! ✅";
+        document.getElementById("auth").disabled = false;
       } else {
-        log('Passkeys are not supported! ❌');
-        document.getElementById('passkeys_check').innerText = 'Passkeys are not supported! ❌';
-        throw new Error('Passkeys are not supported! ❌');
+        log("Passkeys are not supported! ❌");
+        document.getElementById("passkeys_check").innerText = "Passkeys are not supported! ❌";
+        throw new Error("Passkeys are not supported! ❌");
       }
     })();
   </script>
@@ -88,8 +89,8 @@
   <script>
     async function postJson(url, body) {
       return await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       }).then((r) => (r.ok ? r.json() : r.text()));
     }
@@ -97,16 +98,16 @@
 
   <script>
     async function handleRegister() {
-      const username = document.getElementById('name').value;
+      const username = document.getElementById("name").value;
 
-      await postJson('/register/options', { username })
+      await postJson("/register/options", { username })
         .then(log)
         .then(async (options) => await SimpleWebAuthnBrowser.startRegistration(options))
         .then(log)
-        .then(async (cred) => await postJson('/register/verify', { username, cred }))
+        .then(async (cred) => await postJson("/register/verify", { username, cred }))
         .then(log)
         .then((res) => {
-          status(res.verified ? '✅ Registered!' : '❌ Registration failed.');
+          status(res.verified ? "✅ Registered!" : "❌ Registration failed.");
         })
         .catch(log);
     }
@@ -116,22 +117,22 @@
     async function startAuth(options, conditional) {
       await SimpleWebAuthnBrowser.startAuthentication(options, conditional)
         .then(log)
-        .then(async (cred) => await postJson('/login/verify', { cred }))
+        .then(async (cred) => await postJson("/login/verify", { cred }))
         .then(log)
         .then((res) => {
-          status(res.verified ? '✅ Logged in!' : '❌ Login failed.');
+          status(res.verified ? "✅ Logged in!" : "❌ Login failed.");
         });
     }
 
-    const loginOptions = postJson('/login/options').then(log);
+    const loginOptions = postJson("/login/options").then(log);
 
     loginOptions.then(async (options) => {
-      log('WebAuthn Conditional UI started.');
+      log("WebAuthn Conditional UI started.");
       return await startAuth(options, true);
     });
 
     async function handleLogin() {
-      const username = document.getElementById('name').value;
+      const username = document.getElementById("name").value;
 
       await loginOptions.then(async (options) => await startAuth(options, false));
     }
